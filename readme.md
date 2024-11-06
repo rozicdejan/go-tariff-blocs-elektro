@@ -50,7 +50,6 @@ You can use the REST sensor in Home Assistant to fetch data from the add-on.
 Add the following to your configuration.yaml file:
 
 ```yaml
-Copy code
 sensor:
   - platform: rest
     name: Tariff Zone
