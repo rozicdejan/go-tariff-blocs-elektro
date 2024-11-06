@@ -1,10 +1,5 @@
 FROM golang:1.18-alpine
 
-# Set environment variables
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
 
 # Install necessary dependencies
 RUN apk add --no-cache bash jq
@@ -17,8 +12,7 @@ WORKDIR /app
 # Copy Go module files and download dependencies
 COPY go.mod ./
 RUN go mod download
-# Build the Go binary
-RUN go build -o main .
+
 
 # Copy the Go source code and build it
 COPY main.go .
