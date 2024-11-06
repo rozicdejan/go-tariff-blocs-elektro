@@ -335,8 +335,9 @@ const htmlTemplate = `
 `
 
 type TariffData struct {
-	Zone  int    `json:"zone"`
-	Label string `json:"label"`
+	Zone               int    `json:"zone"`
+	Label              string `json:"label"`
+	RemainingBlockTime string `json:"remaining_block_time"`
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -352,8 +353,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
-	zone, label := getTariffZone(now)
-	data := TariffData{Zone: zone, Label: label}
+	zone, label, remainingBlockTime := getTariffZone(now)
+	data := TariffData{
+		Zone:               zone,
+		Label:              label,
+		RemainingBlockTime: remainingBlockTime,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -361,24 +366,66 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getTariffZone(t time.Time) (int, string) {
+func getTariffZone(t time.Time) (int, string, string) {
 	hour := t.Hour()
+	minute := t.Minute()
 	isHighSeason := t.Month() == time.November || t.Month() == time.December || t.Month() == time.January || t.Month() == time.February
 	isWeekend := t.Weekday() == time.Saturday || t.Weekday() == time.Sunday
 
+	// Define zone change hours based on season and weekday/weekend
+	var zoneChangeHours []int
+	if isHighSeason && !isWeekend {
+		zoneChangeHours = []int{6, 7, 14, 16, 20, 22}
+	} else if isHighSeason && isWeekend {
+		zoneChangeHours = []int{0, 6, 14, 22}
+	} else if !isHighSeason && !isWeekend {
+		zoneChangeHours = []int{7, 14, 16, 20, 22}
+	} else {
+		zoneChangeHours = []int{0, 6, 14, 22}
+	}
+
+	// Calculate the next zone change time
+	nextChangeHour := 24 // Default to next day if not found
+	for _, changeHour := range zoneChangeHours {
+		if hour < changeHour || (hour == changeHour && minute == 0) {
+			nextChangeHour = changeHour
+			break
+		}
+	}
+	if nextChangeHour == 24 {
+		nextChangeHour = zoneChangeHours[0] + 24 // Handle wrap-around to next day
+	}
+
+	// Calculate remaining time until the next change
+	remainingMinutes := (nextChangeHour*60 - (hour*60 + minute)) % 1440 // Wrap around at 24 hours
+	remainingHours := remainingMinutes / 60
+	remainingMinutes = remainingMinutes % 60
+	remainingBlockTime := fmt.Sprintf("%dh:%dm", remainingHours, remainingMinutes)
+
+	// Determine zone and label
+	var zone int
+	var label string
 	switch {
 	case (hour >= 7 && hour < 14) || (hour >= 16 && hour < 20):
 		if isHighSeason && !isWeekend {
-			return 1, "Zone 1 (High Season Weekday)"
+			zone = 1
+			label = "Zone 1 (High Season Weekday)"
+		} else {
+			zone = 1
+			label = "Zone 1"
 		}
-		return 1, "Zone 1"
 	case hour == 6 || (hour >= 14 && hour < 16) || (hour >= 20 && hour < 22):
-		return 2, "Zone 2"
+		zone = 2
+		label = "Zone 2"
 	case (hour >= 0 && hour < 6) || (hour >= 22 && hour < 24):
-		return 3, "Zone 3"
+		zone = 3
+		label = "Zone 3"
 	default:
-		return 5, "Zone 5"
+		zone = 5
+		label = "Zone 5"
 	}
+
+	return zone, label, remainingBlockTime
 }
 
 func main() {
