@@ -1,0 +1,17 @@
+{
+    "name": "Tariff Block Display",
+    "version": "1.0",
+    "slug": "tariff_zone_display",
+    "description": "Home Assistant add-on to display and manage tariff zones",
+    "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+    "startup": "services",
+    "boot": "auto",
+    "ports": {
+      "8080/tcp": 8080
+    },
+    "schema": {},
+    "webui": "http://[HOST]:[PORT:8080]",
+    "options": {},
+    "init": false
+  }
+  
