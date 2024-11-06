@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine
+FROM golang:1.18-alpine
 
 # Set environment variables
 ENV GO111MODULE=on \
@@ -6,17 +6,26 @@ ENV GO111MODULE=on \
     GOOS=linux \
     GOARCH=amd64
 
+# Install necessary dependencies
+RUN apk add --no-cache bash jq
+
 # Create and set the working directory
 WORKDIR /app
 
 # If you don't have go.mod and go.sum files, skip copying them
 # Copy the source code
-COPY . .
-
+# Copy Go module files and download dependencies
+COPY go.mod ./
+RUN go mod download
 # Build the Go binary
 RUN go build -o main .
 
-# Make the run.sh script executable
+# Copy the Go source code and build it
+COPY main.go .
+RUN go build -o main main.go
+
+# Copy the run.sh file and make it executable
+COPY run.sh /app/run.sh
 RUN chmod +x /app/run.sh
 
 # Expose the port the app runs on
