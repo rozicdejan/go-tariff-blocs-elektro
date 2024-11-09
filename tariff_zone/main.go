@@ -451,6 +451,122 @@ func getTariffZone(t time.Time) (int, string, string) {
 	isHighSeason := t.Month() == time.November || t.Month() == time.December || t.Month() == time.January || t.Month() == time.February
 	isWeekend := t.Weekday() == time.Saturday || t.Weekday() == time.Sunday
 
+	var zone int
+	var label string
+
+	// High-season non-working day (Free day) breakdown
+	if isHighSeason && isWeekend {
+		switch {
+		case hour >= 22 || hour < 6:
+			zone = 4
+			label = "Zone 4 (High Season Non-Working Day)"
+		case hour >= 6 && hour < 7:
+			zone = 3
+			label = "Zone 3 (High Season Non-Working Day)"
+		case hour >= 7 && hour < 14:
+			zone = 2
+			label = "Zone 2 (High Season Non-Working Day)"
+		case hour >= 14 && hour < 16:
+			zone = 3
+			label = "Zone 3 (High Season Non-Working Day)"
+		case hour >= 16 && hour < 20:
+			zone = 2
+			label = "Zone 2 (High Season Non-Working Day)"
+		case hour >= 20 && hour < 22:
+			zone = 3
+			label = "Zone 3 (High Season Non-Working Day)"
+		}
+	}
+
+	// High-season working day breakdown
+	if isHighSeason && !isWeekend {
+		switch {
+		case hour >= 22 || hour < 6:
+			zone = 3
+			label = "Zone 3 (High Season Working Day)"
+		case hour >= 6 && hour < 7:
+			zone = 2
+			label = "Zone 2 (High Season Working Day)"
+		case hour >= 7 && hour < 14:
+			zone = 1
+			label = "Zone 1 (High Season Working Day)"
+		case hour >= 14 && hour < 16:
+			zone = 2
+			label = "Zone 2 (High Season Working Day)"
+		case hour >= 16 && hour < 20:
+			zone = 1
+			label = "Zone 1 (High Season Working Day)"
+		case hour >= 20 && hour < 22:
+			zone = 2
+			label = "Zone 2 (High Season Working Day)"
+		}
+	}
+
+	// Low-season working day breakdown
+	if !isHighSeason && !isWeekend {
+		switch {
+		case hour >= 22 || hour < 6:
+			zone = 4
+			label = "Zone 4 (Low Season Working Day)"
+		case hour >= 6 && hour < 7:
+			zone = 3
+			label = "Zone 3 (Low Season Working Day)"
+		case hour >= 7 && hour < 14:
+			zone = 2
+			label = "Zone 2 (Low Season Working Day)"
+		case hour >= 14 && hour < 16:
+			zone = 3
+			label = "Zone 3 (Low Season Working Day)"
+		case hour >= 16 && hour < 20:
+			zone = 2
+			label = "Zone 2 (Low Season Working Day)"
+		case hour >= 20 && hour < 22:
+			zone = 3
+			label = "Zone 3 (Low Season Working Day)"
+		}
+	}
+
+	// Low-season non-working day (Free day) breakdown
+	if !isHighSeason && isWeekend {
+		switch {
+		case hour >= 22 || hour < 6:
+			zone = 5
+			label = "Zone 5 (Low Season Non-Working Day)"
+		case hour >= 6 && hour < 7:
+			zone = 4
+			label = "Zone 4 (Low Season Non-Working Day)"
+		case hour >= 7 && hour < 14:
+			zone = 1
+			label = "Zone 1 (Low Season Non-Working Day)"
+		case hour >= 14 && hour < 16:
+			zone = 2
+			label = "Zone 2 (Low Season Non-Working Day)"
+		case hour >= 16 && hour < 20:
+			zone = 1
+			label = "Zone 1 (Low Season Non-Working Day)"
+		case hour >= 20 && hour < 22:
+			zone = 2
+			label = "Zone 2 (Low Season Non-Working Day)"
+		}
+	}
+
+	// Fallback if no condition matched (this should not typically happen)
+	if zone == 0 {
+		zone = 3
+		label = "Zone 3 (Default)"
+	}
+
+	// Calculate remaining block time
+	nextChangeHour := getNextChangeHour(hour, minute, isHighSeason, isWeekend)
+	remainingMinutes := (nextChangeHour*60 - (hour*60 + minute)) % 1440
+	remainingHours := remainingMinutes / 60
+	remainingMinutes = remainingMinutes % 60
+	remainingBlockTime := fmt.Sprintf("%dh:%dm", remainingHours, remainingMinutes)
+
+	return zone, label, remainingBlockTime
+}
+
+func getNextChangeHour(hour, minute int, isHighSeason, isWeekend bool) int {
 	var zoneChangeHours []int
 	if isHighSeason && !isWeekend {
 		zoneChangeHours = []int{6, 7, 14, 16, 20, 22}
@@ -462,45 +578,12 @@ func getTariffZone(t time.Time) (int, string, string) {
 		zoneChangeHours = []int{0, 6, 14, 22}
 	}
 
-	nextChangeHour := 24
 	for _, changeHour := range zoneChangeHours {
 		if hour < changeHour || (hour == changeHour && minute == 0) {
-			nextChangeHour = changeHour
-			break
+			return changeHour
 		}
 	}
-	if nextChangeHour == 24 {
-		nextChangeHour = zoneChangeHours[0] + 24
-	}
-
-	remainingMinutes := (nextChangeHour*60 - (hour*60 + minute)) % 1440
-	remainingHours := remainingMinutes / 60
-	remainingMinutes = remainingMinutes % 60
-	remainingBlockTime := fmt.Sprintf("%dh:%dm", remainingHours, remainingMinutes)
-
-	var zone int
-	var label string
-	switch {
-	case (hour >= 7 && hour < 14) || (hour >= 16 && hour < 20):
-		if isHighSeason && !isWeekend {
-			zone = 1
-			label = "Zone 1 (High Season Weekday)"
-		} else {
-			zone = 1
-			label = "Zone 1"
-		}
-	case hour == 6 || (hour >= 14 && hour < 16) || (hour >= 20 && hour < 22):
-		zone = 2
-		label = "Zone 2"
-	case (hour >= 0 && hour < 6) || (hour >= 22 && hour < 24):
-		zone = 3
-		label = "Zone 3"
-	default:
-		zone = 5
-		label = "Zone 5"
-	}
-
-	return zone, label, remainingBlockTime
+	return zoneChangeHours[0] + 24 // Handle wrap-around to the next day
 }
 
 func main() {

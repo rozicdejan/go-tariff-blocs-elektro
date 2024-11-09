@@ -1,6 +1,6 @@
 {
     "name": "Tariff Block Display",
-    "version": "1.9.1",
+    "version": "1.9.2",
     "slug": "tariff_zone_display",
     "description": "Home Assistant add-on to display and manage tariff zones",
     "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
