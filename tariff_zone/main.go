@@ -171,19 +171,19 @@ const htmlTemplate = `
     
     <div class="legend">
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #009688;"></div> Zone 5 (Lowest)
+            <div class="legend-color" style="background-color: #009688;"></div> Blok 5
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #4DB6AC;"></div> Zone 4
+            <div class="legend-color" style="background-color: #4DB6AC;"></div> Blok 4
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #90A4AE;"></div> Zone 3
+            <div class="legend-color" style="background-color: #90A4AE;"></div> Blok 3
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #1976D2;"></div> Zone 2
+            <div class="legend-color" style="background-color: #1976D2;"></div> Blok 2
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #0D47A1;"></div> Zone 1 (Highest)
+            <div class="legend-color" style="background-color: #0D47A1;"></div> Blok 1
         </div>
     </div>
 
