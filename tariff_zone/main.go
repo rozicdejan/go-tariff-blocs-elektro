@@ -53,7 +53,7 @@ const htmlTemplate = `
             height: 70%;
             background-color: white;
             border-radius: 50%;
-            z-index: 2;
+            z-index: 4;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -142,13 +142,13 @@ const htmlTemplate = `
         .current-time-indicator {
     position: absolute;
     width: 4px;
-    height: 270px;
+    height: 165px;
     background-color: #FFFFFF;
     top: 0;
     left: 50%;
     transform-origin: 50% 100%;
     transform: rotate(0deg);
-    z-index: 5;
+    z-index: 3;
     border-radius: 2px;
     background-color: rgba(255, 255, 255, 0.8); /* Transparent white */
 }
