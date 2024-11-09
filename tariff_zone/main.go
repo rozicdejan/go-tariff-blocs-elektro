@@ -93,8 +93,8 @@ const htmlTemplate = `
             position: absolute;
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            z-index: 3;
+            pointer-events: none;s
+            z-index: 0;
         }
         .line {
             position: absolute;
@@ -143,38 +143,32 @@ const htmlTemplate = `
 </head>
 <body>
     <div class="circle-container" id="circleContainer">
-        <!-- Segments will be generated here by JavaScript -->
         <div class="center-circle">
             <div class="current-zone" id="currentZoneNumber">0</div>
             <div class="center-text" id="centerText">Loading...</div>
         </div>
-        <div class="hour-markers" id="hourMarkers">
-            <!-- Hour markers will be generated here by JavaScript -->
-        </div>
-        <div class="divider-lines" id="dividerLines">
-            <!-- Divider lines between hours will be generated here by JavaScript -->
-        </div>
-        <div class="arrow" id="timeArrow"></div> <!-- Arrow indicating the current time -->
+        <div class="hour-markers" id="hourMarkers"></div>
+        <div class="divider-lines" id="dividerLines"></div>
+        <div class="arrow" id="timeArrow"></div>
     </div>
     
     <div class="remaining-time" id="remainingTime">Calculating time until next block...</div>
     
-    <!-- Legend for color-coded zones -->
     <div class="legend">
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #009688;"></div> 5 (Lowest)
+            <div class="legend-color" style="background-color: #009688;"></div> Zone 5 (Lowest)
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #4DB6AC;"></div> 4
+            <div class="legend-color" style="background-color: #4DB6AC;"></div> Zone 4
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #90A4AE;"></div> 3
+            <div class="legend-color" style="background-color: #90A4AE;"></div> Zone 3
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #1976D2;"></div> 2
+            <div class="legend-color" style="background-color: #1976D2;"></div> Zone 2
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #0D47A1;"></div> 1 (Highest)
+            <div class="legend-color" style="background-color: #0D47A1;"></div> Zone 1 (Highest)
         </div>
     </div>
 
@@ -193,7 +187,7 @@ const htmlTemplate = `
                 const segment = document.createElement("div");
                 segment.className = "segment";
                 segment.style.backgroundColor = getColorForHour(i);
-                segment.style.transform = "rotate(" + (i * 15 - 45) + "deg)"; // Offset by -90° to align 0 at the top
+                segment.style.transform = "rotate(" + (i * 15 - 45) + "deg)";
                 container.appendChild(segment);
             }
         }
@@ -206,29 +200,88 @@ const htmlTemplate = `
         function getZoneForHour(hour) {
             const now = new Date();
             const month = now.getMonth();
-            const isHighSeason = month === 10 || month === 11 || month === 0 || month === 1;
+            const isHighSeason = month === 10 || month === 11 || month === 0 || month === 1; // High season: November (10), December (11), January (0), February (1)
             const isWeekend = now.getDay() === 0 || now.getDay() === 6;
 
-            if ((hour >= 7 && hour < 14) || (hour >= 16 && hour < 20)) {
-                if (isHighSeason && !isWeekend) {
-                    return { zone: 1, label: "High Season, Weekday" };
+            // High-season non-working day (Free day) breakdown
+            if (isHighSeason && isWeekend) {
+                if (hour >= 22 || hour < 6) {
+                    return { zone: 4, label: "Zone 4 (High Season Non-Working Day)" };
+                } else if (hour >= 6 && hour < 7) {
+                    return { zone: 3, label: "Zone 3 (High Season Non-Working Day)" };
+                } else if (hour >= 7 && hour < 14) {
+                    return { zone: 2, label: "Zone 2 (High Season Non-Working Day)" };
+                } else if (hour >= 14 && hour < 16) {
+                    return { zone: 3, label: "Zone 3 (High Season Non-Working Day)" };
+                } else if (hour >= 16 && hour < 20) {
+                    return { zone: 2, label: "Zone 2 (High Season Non-Working Day)" };
+                } else if (hour >= 20 && hour < 22) {
+                    return { zone: 3, label: "Zone 3 (High Season Non-Working Day)" };
                 }
-                return { zone: 1, label: "Zone 1" };
-            } else if (hour === 6 || (hour >= 14 && hour < 16) || (hour >= 20 && hour < 22)) {
-                return { zone: 2, label: "Zone 2" };
-            } else if ((hour >= 0 && hour < 6) || (hour >= 22 && hour < 24)) {
-                return { zone: 3, label: "Zone 3" };
             }
-            return { zone: 5, label: "Zone 5" };
+
+            // High-season working day breakdown
+            if (isHighSeason && !isWeekend) {
+                if (hour >= 22 || hour < 6) {
+                    return { zone: 3, label: "Zone 3 (High Season Working Day)" };
+                } else if (hour >= 6 && hour < 7) {
+                    return { zone: 2, label: "Zone 2 (High Season Working Day)" };
+                } else if (hour >= 7 && hour < 14) {
+                    return { zone: 1, label: "Zone 1 (High Season Working Day)" };
+                } else if (hour >= 14 && hour < 16) {
+                    return { zone: 2, label: "Zone 2 (High Season Working Day)" };
+                } else if (hour >= 16 && hour < 20) {
+                    return { zone: 1, label: "Zone 1 (High Season Working Day)" };
+                } else if (hour >= 20 && hour < 22) {
+                    return { zone: 2, label: "Zone 2 (High Season Working Day)" };
+                }
+            }
+
+            // Low-season working day breakdown
+            if (!isHighSeason && !isWeekend) {
+                if (hour >= 22 || hour < 6) {
+                    return { zone: 4, label: "Zone 4 (Low Season Working Day)" };
+                } else if (hour >= 6 && hour < 7) {
+                    return { zone: 3, label: "Zone 3 (Low Season Working Day)" };
+                } else if (hour >= 7 && hour < 14) {
+                    return { zone: 2, label: "Zone 2 (Low Season Working Day)" };
+                } else if (hour >= 14 && hour < 16) {
+                    return { zone: 3, label: "Zone 3 (Low Season Working Day)" };
+                } else if (hour >= 16 && hour < 20) {
+                    return { zone: 2, label: "Zone 2 (Low Season Working Day)" };
+                } else if (hour >= 20 && hour < 22) {
+                    return { zone: 3, label: "Zone 3 (Low Season Working Day)" };
+                }
+            }
+
+            // Low-season non-working day (Free day) breakdown
+            if (!isHighSeason && isWeekend) {
+                if (hour >= 22 || hour < 6) {
+                    return { zone: 5, label: "Zone 5 (Low Season Non-Working Day)" };
+                } else if (hour >= 6 && hour < 7) {
+                    return { zone: 4, label: "Zone 4 (Low Season Non-Working Day)" };
+                } else if (hour >= 7 && hour < 14) {
+                    return { zone: 1, label: "Zone 1 (Low Season Non-Working Day)" };
+                } else if (hour >= 14 && hour < 16) {
+                    return { zone: 2, label: "Zone 2 (Low Season Non-Working Day)" };
+                } else if (hour >= 16 && hour < 20) {
+                    return { zone: 1, label: "Zone 1 (Low Season Non-Working Day)" };
+                } else if (hour >= 20 && hour < 22) {
+                    return { zone: 2, label: "Zone 2 (Low Season Non-Working Day)" };
+                }
+            }
+
+            // Default fallback (if needed)
+            return { zone: 3, label: "Zone 3 (Default)" };
         }
 
         function createHourMarkers() {
             const markersContainer = document.getElementById("hourMarkers");
-            const radius = 100; // Radius to place markers closer to the center
+            const radius = 100;
 
             for (let i = 0; i < 24; i++) {
-                const angle = (i * 15 - 90) * (Math.PI / 180); // Offset -90° for 0 at the top
-                const x = radius * Math.cos(angle) + 160; // Center + offset
+                const angle = (i * 15 - 90) * (Math.PI / 180);
+                const x = radius * Math.cos(angle) + 160;
                 const y = radius * Math.sin(angle) + 160;
 
                 const marker = document.createElement("div");
@@ -255,7 +308,7 @@ const htmlTemplate = `
             const hours = now.getHours();
             const minutes = now.getMinutes();
             const totalMinutes = hours * 60 + minutes;
-            const rotation = (totalMinutes / 1440) * 360 - 90; // 1440 mins in a day, -90 to align 0 at the top
+            const rotation = (totalMinutes / 1440) * 360 - 90;
             document.getElementById("timeArrow").style.transform = "rotate(" + rotation + "deg)";
         }
 
@@ -297,7 +350,7 @@ const htmlTemplate = `
             const minutesUntilNextChange = totalMinutesUntilNextChange % 60;
 
             document.getElementById("remainingTime").innerText = 
-                "Remaining block time : " + hoursUntilNextChange + "h:" + minutesUntilNextChange + "m";
+                "Remaining block time: " + hoursUntilNextChange + "h:" + minutesUntilNextChange + "m";
         }
 
         function highlightCurrentZone() {
@@ -305,10 +358,8 @@ const htmlTemplate = `
             const hour = now.getHours();
             const zoneInfo = getZoneForHour(hour);
 
-           
-            document.getElementById("currentZoneNumber").innerText = zoneInfo.zone; // Display the zone number in the center
+            document.getElementById("currentZoneNumber").innerText = zoneInfo.zone;
             updateCenterText();
-           
             calculateRemainingTime();
         }
 
@@ -318,17 +369,17 @@ const htmlTemplate = `
             const month = now.getMonth();
             const isHighSeason = month === 10 || month === 11 || month === 0 || month === 1;
 
-            let dayType = isWeekend ? "Free Day" : "Working Day";
-            let seasonType = isHighSeason ? "High Season" : "Not High Season";
+            let dayType = isWeekend ? "Dela Prosta Dan" : "Delovni Dan";
+            let seasonType = isHighSeason ? "Višja Sezona" : "Nizka Sezona";
 
             document.getElementById("centerText").innerText = dayType + "\n" + seasonType;
         }
 
         createSegments();
         createHourMarkers();
-        
+        createDividerLines();
         highlightCurrentZone();
-        setInterval(highlightCurrentZone, 60000); // Update every minute
+        setInterval(highlightCurrentZone, 60000);
     </script>
 </body>
 </html>
@@ -372,7 +423,6 @@ func getTariffZone(t time.Time) (int, string, string) {
 	isHighSeason := t.Month() == time.November || t.Month() == time.December || t.Month() == time.January || t.Month() == time.February
 	isWeekend := t.Weekday() == time.Saturday || t.Weekday() == time.Sunday
 
-	// Define zone change hours based on season and weekday/weekend
 	var zoneChangeHours []int
 	if isHighSeason && !isWeekend {
 		zoneChangeHours = []int{6, 7, 14, 16, 20, 22}
@@ -384,8 +434,7 @@ func getTariffZone(t time.Time) (int, string, string) {
 		zoneChangeHours = []int{0, 6, 14, 22}
 	}
 
-	// Calculate the next zone change time
-	nextChangeHour := 24 // Default to next day if not found
+	nextChangeHour := 24
 	for _, changeHour := range zoneChangeHours {
 		if hour < changeHour || (hour == changeHour && minute == 0) {
 			nextChangeHour = changeHour
@@ -393,16 +442,14 @@ func getTariffZone(t time.Time) (int, string, string) {
 		}
 	}
 	if nextChangeHour == 24 {
-		nextChangeHour = zoneChangeHours[0] + 24 // Handle wrap-around to next day
+		nextChangeHour = zoneChangeHours[0] + 24
 	}
 
-	// Calculate remaining time until the next change
-	remainingMinutes := (nextChangeHour*60 - (hour*60 + minute)) % 1440 // Wrap around at 24 hours
+	remainingMinutes := (nextChangeHour*60 - (hour*60 + minute)) % 1440
 	remainingHours := remainingMinutes / 60
 	remainingMinutes = remainingMinutes % 60
 	remainingBlockTime := fmt.Sprintf("%dh:%dm", remainingHours, remainingMinutes)
 
-	// Determine zone and label
 	var zone int
 	var label string
 	switch {
