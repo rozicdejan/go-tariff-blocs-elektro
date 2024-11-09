@@ -93,7 +93,7 @@ const htmlTemplate = `
             position: absolute;
             width: 100%;
             height: 100%;
-            pointer-events: none;s
+            pointer-events: none;
             z-index: 0;
         }
         .line {
@@ -139,6 +139,20 @@ const htmlTemplate = `
             font-size: 1em;
             color: #666;
         }
+        .current-time-indicator {
+    position: absolute;
+    width: 4px;
+    height: 270px;
+    background-color: #FFFFFF;
+    top: 0;
+    left: 50%;
+    transform-origin: 50% 100%;
+    transform: rotate(0deg);
+    z-index: 5;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.8); /* Transparent white */
+}
+
     </style>
 </head>
 <body>
@@ -150,6 +164,7 @@ const htmlTemplate = `
         <div class="hour-markers" id="hourMarkers"></div>
         <div class="divider-lines" id="dividerLines"></div>
         <div class="arrow" id="timeArrow"></div>
+        <div class="current-time-indicator" id="currentTimeIndicator"></div> <!-- Current time indicator -->
     </div>
     
     <div class="remaining-time" id="remainingTime">Calculating time until next block...</div>
@@ -312,6 +327,18 @@ const htmlTemplate = `
             document.getElementById("timeArrow").style.transform = "rotate(" + rotation + "deg)";
         }
 
+        function updateCurrentTimeIndicator() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const totalMinutes = hours * 60 + minutes;
+
+            // Calculate the rotation based on the total minutes in a 24-hour period (1440 minutes total)
+            const rotation = (totalMinutes / 1440) * 360 ; // Subtract 90 degrees to align to the top
+           document.getElementById("currentTimeIndicator").style.transform = "rotate(" + rotation + "deg)";
+
+        }
+
         function calculateRemainingTime() {
             const now = new Date();
             const hour = now.getHours();
@@ -361,6 +388,7 @@ const htmlTemplate = `
             document.getElementById("currentZoneNumber").innerText = zoneInfo.zone;
             updateCenterText();
             calculateRemainingTime();
+            updateCurrentTimeIndicator(); // Call this function to update the current time indicator
         }
 
         function updateCenterText() {
